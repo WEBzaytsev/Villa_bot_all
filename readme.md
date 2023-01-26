@@ -11,8 +11,8 @@ There is already premade Compose files:
 * Dev: uses @testvillarenteebot and @testvillarenterbot
 * Prod: uses @villa_rental_bot and @villa_tenant_bot
 
-To run them:
-Dev: `docker compose up -d --env-file dev.env -f docker-compose.dev.yml up`
+Commands to run them:\
+Dev: `docker compose up -d --env-file dev.env -f docker-compose.dev.yml up`\
 Prod: `docker compose up -d --env-file prod.env -f docker-compose.prod.yml up`
 
 ## .env details
