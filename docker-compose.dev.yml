@@ -1,0 +1,48 @@
+services:
+  rentee:
+    build: ./rentee-bot
+    restart: on-failure:3
+    depends_on: 
+      db:
+        condition: service_healthy
+    env_file:
+      - dev.env
+
+  renter:
+    build: ./renter-bot
+    restart: on-failure:3
+    depends_on: 
+      db:
+        condition: service_healthy
+    env_file:
+      - dev.env
+    
+  parser:
+    build: ./parser
+    depends_on: 
+      db:
+        condition: service_healthy
+    env_file:
+      - dev.env
+
+  cache:
+    image: mongo:latest
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: $MONGO_USERNAME
+      MONGO_INITDB_ROOT_PASSWORD: $MONGO_PASSWORD
+    volumes: 
+      - ./mongodb-data-dev:/data/db
+
+  db:
+    image: postgres
+    restart: always
+    env_file:
+      - dev.env
+    volumes:
+      - ./db-data-dev/:/var/lib/postgresql/data/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
