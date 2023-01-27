@@ -8,15 +8,17 @@ from aiogram.types import (KeyboardButton, Message, ReplyKeyboardMarkup,
 import keyboards
 import states
 from misc import dp
-from orm_utils import change_pii, start_user
+from orm_utils import change_pii, start_user, is_admin, is_admin_exists, switch_admin
 
 
 async def cmd_start_alt(message: types.Message, state: FSMContext):
     current_state = await state.get_state()  # resets state
     if current_state is not None:
         await state.finish()
-
-    await message.answer("Welcome!", reply_markup=keyboards.main_menu)
+    markup = keyboards.main_menu()
+    if is_admin(message.from_user.id):
+        markup = keyboards.main_menu(admin=True)
+    return await message.answer("Welcome!", reply_markup=markup)
 
 
 @dp.message_handler(state='*', commands=['start'])
@@ -31,8 +33,10 @@ async def cmd_start(message: types.Message, state: FSMContext):
         current_state = await state.get_state()  # resets state
         if current_state is not None:
             await state.finish()
-
-        await message.answer("Welcome!", reply_markup=keyboards.main_menu)
+    markup = keyboards.main_menu()
+    if is_admin(message.from_user.id):
+        markup = keyboards.main_menu(admin=True)
+    return await message.answer("Welcome!", reply_markup=markup)
 
 
 @dp.message_handler(commands='cancel', state='*')
@@ -47,7 +51,6 @@ async def cancel_handler(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(commands='state', state='*')
-@dp.message_handler(Text(equals='Cancel', ignore_case=True), state='*')
 async def cancel_handler(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
     await message.reply(f'{current_state}')
@@ -81,7 +84,10 @@ async def process_phone_contact(message: Message, state: FSMContext):
         return
 
     await state.finish()
-    await message.answer("Welcome!", reply_markup=keyboards.main_menu)
+    markup = keyboards.main_menu()
+    if is_admin(message.from_user.id):
+        markup = keyboards.main_menu(admin=True)
+    return await message.answer("Welcome!", reply_markup=markup)
 
 
 @dp.message_handler(state=states.NewUser.phone)
@@ -103,10 +109,10 @@ async def process_phone(message: Message, state: FSMContext):
         "👍 Profile info saved.",
         reply_markup=ReplyKeyboardRemove())
     await state.finish()
-    # admin = is_admin(message.from_user.id)
-    # if admin:
-    # keyboard.add('admin_button')
-    await message.answer("Welcome!", reply_markup=keyboards.main_menu)
+    markup = keyboards.main_menu()
+    if is_admin(message.from_user.id):
+        markup = keyboards.main_menu(admin=True)
+    return await message.answer("Welcome!", reply_markup=markup)
 
 
 @dp.callback_query_handler(Text(equals='change_pii', ignore_case=True))
@@ -114,3 +120,27 @@ async def process_term(query: types.CallbackQuery):
     await query.answer()
     await query.message.answer("Please enter your name:", reply_markup=ReplyKeyboardRemove())
     await states.NewUser.name.set()
+
+@dp.message_handler(state='*', commands=['admin_rights'])
+async def grant_admin_rights(message: Message, state: FSMContext):
+    argument = message.get_args()
+
+    if not is_admin_exists():
+        await message.answer("No one has admin rights on the database. Enabling admin rights for your account...")
+        if switch_admin(message.from_user.id):
+            await message.answer("Done!")
+            await cmd_start_alt(message, state)
+        else:
+            await message.answer("Something went wrong.")
+
+    if argument:
+        if is_admin(message.from_user.id):
+            if (not argument.isdigit()):
+                return await message.answer("Unrecognized argument.")
+            switch_result = switch_admin(message.from_user.id)
+            if switch_result == True:
+                await message.answer("Admin rights enabled successfully!")
+            elif switch_result == False:
+                await message.answer("Admin rights disabled successfully!")
+            elif switch_result == None:
+                await message.answer("Can't find this user in database.")
