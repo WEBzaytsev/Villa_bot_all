@@ -11,7 +11,7 @@ from aiogram.utils import exceptions
 import keyboards
 import states
 from misc import bot, dp
-from orm_utils import get_custom_user_searches
+from orm_utils import get_custom_user_searches, is_admin
 
 from .admin_menu import admin_menu
 
@@ -176,14 +176,14 @@ async def broadcaster(users_list, text):
     return count
 
 
-@dp.callback_query_handler(Text(equals='admin_broadcast', ignore_case=True), state=states.Menu.admin_menu)
+@dp.callback_query_handler(lambda c: is_admin(c.from_user.id), Text(equals='admin_broadcast', ignore_case=True), state=states.Menu.admin_menu)
 async def admin_broadcast_from_admin(query: types.CallbackQuery, state: FSMContext):
     await state.update_data(data=DEFAULT_DATA)
     await state.update_data(broadcast_text=None)
     await admin_broadcast(query, state)
 
 
-@dp.callback_query_handler(Text(equals='admin_broadcast', ignore_case=True), state=states.BroadcastState.all_states)
+@dp.callback_query_handler(lambda c: is_admin(c.from_user.id), Text(equals='admin_broadcast', ignore_case=True), state=states.BroadcastState.all_states)
 async def admin_broadcast(query: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as statedata:
         # await query.answer(f'Under developement')
@@ -201,7 +201,7 @@ async def admin_broadcast(query: types.CallbackQuery, state: FSMContext):
             await states.BroadcastState.change.set()
 
 
-@dp.callback_query_handler(Text(equals='change_text', ignore_case=True), state=states.BroadcastState.change)
+@dp.callback_query_handler(lambda c: is_admin(c.from_user.id), Text(equals='change_text', ignore_case=True), state=states.BroadcastState.change)
 async def change_text(query: types.CallbackQuery, state: FSMContext):
     keyboard = types.InlineKeyboardMarkup()
     prevbutton = types.InlineKeyboardButton(
@@ -211,7 +211,7 @@ async def change_text(query: types.CallbackQuery, state: FSMContext):
     await states.BroadcastState.changetext.set()
 
 
-@dp.message_handler(state=states.BroadcastState.changetext)
+@dp.message_handler(lambda c: is_admin(c.from_user.id), state=states.BroadcastState.changetext)
 async def process_changetext_message(message: Message, state: FSMContext):
     keyboard = keyboards.broadcast_keyboard()
     prevbutton = types.InlineKeyboardButton(
@@ -227,7 +227,7 @@ async def process_changetext_message(message: Message, state: FSMContext):
     await states.BroadcastState.change.set()
 
 
-@dp.callback_query_handler(Text(equals='target_price', ignore_case=True), state=states.BroadcastState.change)
+@dp.callback_query_handler(lambda c: is_admin(c.from_user.id), Text(equals='target_price', ignore_case=True), state=states.BroadcastState.change)
 async def target_price(query: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as statedata:
         keyboard = _keyboard('price', statedata)
@@ -235,7 +235,7 @@ async def target_price(query: types.CallbackQuery, state: FSMContext):
     await query.message.edit_text('Target prices:', reply_markup=keyboard)
 
 
-@dp.callback_query_handler(Text(equals='target_terms', ignore_case=True), state=states.BroadcastState.change)
+@dp.callback_query_handler(lambda c: is_admin(c.from_user.id), Text(equals='target_terms', ignore_case=True), state=states.BroadcastState.change)
 async def target_terms(query: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as statedata:
         keyboard = _keyboard('term', statedata)
@@ -243,7 +243,7 @@ async def target_terms(query: types.CallbackQuery, state: FSMContext):
     await query.message.edit_text('Target terms:', reply_markup=keyboard)
 
 
-@dp.callback_query_handler(Text(equals='target_location', ignore_case=True), state=states.BroadcastState.change)
+@dp.callback_query_handler(lambda c: is_admin(c.from_user.id), Text(equals='target_location', ignore_case=True), state=states.BroadcastState.change)
 async def target_location(query: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as statedata:
         keyboard = _keyboard('location', statedata)
@@ -251,7 +251,7 @@ async def target_location(query: types.CallbackQuery, state: FSMContext):
     await query.message.edit_text('Target location:', reply_markup=keyboard)
 
 
-@dp.callback_query_handler(Text(equals='target_bedrooms', ignore_case=True), state=states.BroadcastState.change)
+@dp.callback_query_handler(lambda c: is_admin(c.from_user.id), Text(equals='target_bedrooms', ignore_case=True), state=states.BroadcastState.change)
 async def target_bedrooms(query: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as statedata:
         keyboard = _keyboard('bedrooms', statedata)
@@ -259,7 +259,7 @@ async def target_bedrooms(query: types.CallbackQuery, state: FSMContext):
     await query.message.edit_text('Target bedrooms:', reply_markup=keyboard)
 
 
-@dp.callback_query_handler(Text(equals='send_broadcast', ignore_case=True), state=states.BroadcastState.change)
+@dp.callback_query_handler(lambda c: is_admin(c.from_user.id), Text(equals='send_broadcast', ignore_case=True), state=states.BroadcastState.change)
 async def send_broadcast(query: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as statedata:
         recipients = _get_all_recipients(statedata, True)
@@ -280,7 +280,7 @@ async def send_broadcast(query: types.CallbackQuery, state: FSMContext):
         await query.answer('No recipients.', show_alert=True)
 
 
-@dp.callback_query_handler(Text(equals='send_broadcast_confirm', ignore_case=True), state=states.BroadcastState.confirmsend)
+@dp.callback_query_handler(lambda c: is_admin(c.from_user.id), Text(equals='send_broadcast_confirm', ignore_case=True), state=states.BroadcastState.confirmsend)
 async def send_broadcast_confirm(query: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as statedata:
         recipients = _get_all_recipients(statedata)
@@ -290,7 +290,7 @@ async def send_broadcast_confirm(query: types.CallbackQuery, state: FSMContext):
     await admin_menu(query=query, state=state)
 
 
-@dp.callback_query_handler(Text(startswith="toggle"), state=states.BroadcastState.all_states)
+@dp.callback_query_handler(lambda c: is_admin(c.from_user.id), Text(startswith="toggle"), state=states.BroadcastState.all_states)
 async def process_toggle_callback(query: types.CallbackQuery, state: FSMContext):
     await query.answer()
 

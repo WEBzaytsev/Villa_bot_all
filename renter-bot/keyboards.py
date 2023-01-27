@@ -9,19 +9,23 @@ price_cb = CallbackData('price', 'action', 'term')
 villalist_cb = CallbackData('villa', 'id', 'action')
 edit_cb = CallbackData('choose', 'attrib', 'value')
 
-main_menu = InlineKeyboardMarkup(row_width=1) \
-    .add(InlineKeyboardButton('📥 Add villa', callback_data='add_villa')) \
-    .add(InlineKeyboardButton('👤 Fill out contact information', callback_data='change_pii'))\
-    .add(InlineKeyboardButton('✏ Change villa info', callback_data='change_villa'))\
-    # TODO: .add(InlineKeyboardButton('🙋 Feedback', callback_data='feedback'))\
+
 
 search_menu = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True) \
     .add(KeyboardButton("Main menu"))
 
 remove_kb = ReplyKeyboardRemove()
 
-admin_main_menu = main_menu.add(InlineKeyboardButton(
-    '🛠️ Admin menu', callback_data='admin_menu'))
+def main_menu(admin=False):
+    main_menu = InlineKeyboardMarkup(row_width=1) \
+    .add(InlineKeyboardButton('📥 Add villa', callback_data='add_villa')) \
+    .add(InlineKeyboardButton('👤 Fill out contact information', callback_data='change_pii'))\
+    .add(InlineKeyboardButton('✏ Change villa info', callback_data='change_villa'))\
+    # TODO: .add(InlineKeyboardButton('🙋 Feedback', callback_data='feedback'))\
+    if admin:
+        main_menu.add(InlineKeyboardButton(
+            '🛠️ Admin menu', callback_data='admin_menu'))
+    return main_menu
 
 
 def villa_keyboard(apart_id):
@@ -50,7 +54,8 @@ def villa_keyboard(apart_id):
 admin_menu = InlineKeyboardMarkup(row_width=1) \
     .add(InlineKeyboardButton('✏ Edit listing', callback_data='admin_edit')) \
     .add(InlineKeyboardButton('📜 Stats', callback_data='admin_stats')) \
-    .add(InlineKeyboardButton('📣 Broadcasting', callback_data='admin_broadcast'))
+    .add(InlineKeyboardButton('📣 Broadcasting', callback_data='admin_broadcast')) \
+    .add(InlineKeyboardButton('⬅️ Back', callback_data='mainmenu'))
 
 
 def broadcast_keyboard():

@@ -8,7 +8,7 @@ from aiogram_calendar import (SimpleCalendar, simple_cal_callback)
 import keyboards
 import states
 from misc import bot, dp
-from orm_utils import new_apartment, set_apartment_media
+from orm_utils import new_apartment, set_apartment_media, is_admin
 
 from .general_commands import cmd_start_alt
 
@@ -163,8 +163,12 @@ async def process_term(query: CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(Text(equals='mainmenu', ignore_case=True), state='*')
 async def process_mainmenu(query: CallbackQuery, state: FSMContext):
     await query.answer()
-    await query.message.edit_text("Welcome!", reply_markup=keyboards.main_menu)
     await state.finish()
+    markup = keyboards.main_menu()
+    if is_admin(query.from_user.id):
+        markup = keyboards.main_menu(admin=True)
+    return await query.message.edit_text("Welcome!", reply_markup=markup)
+    
 
 
 @dp.callback_query_handler(keyboards.pager_cb.filter(button='next'), state=states.NewVilla.term)

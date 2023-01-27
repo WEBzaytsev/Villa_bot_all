@@ -187,6 +187,22 @@ def is_admin(tgid):
     return query
 
 
+def is_admin_exists():
+    query = Client.select().where(Client.is_admin == True).count()
+    if query:
+        return True
+    return False
+
+
+def switch_admin(tgid):
+    client = Client.get_or_none(Client.tgid == tgid)
+    if client:
+        client.is_admin = not client.is_admin
+        client.save()
+        return client.is_admin
+    return None  
+
+
 def get_custom_user_searches(facility_list=None, location_list=None, term_list=None, bedrooms_list=None, price_list=None, count=False):
     query = UserAction\
         .select(Client.tgid)\

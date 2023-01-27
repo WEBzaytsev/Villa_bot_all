@@ -8,12 +8,12 @@ from aiogram.types import (CallbackQuery, InlineKeyboardButton,
 import keyboards
 import states
 from misc import dp
-from orm_utils import (get_appart_info, get_stats)
+from orm_utils import (get_appart_info, get_stats, is_admin)
 
 from .change_villa import format_request
 
 
-@dp.callback_query_handler(Text(equals='admin_edit', ignore_case=True), state=states.Menu.admin_menu)
+@dp.callback_query_handler(lambda c: is_admin(c.from_user.id), Text(equals='admin_edit', ignore_case=True), state=states.Menu.admin_menu)
 async def cmd_admin(query: CallbackQuery, state: FSMContext):
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("< Back", callback_data="admin_menu"))
@@ -21,7 +21,7 @@ async def cmd_admin(query: CallbackQuery, state: FSMContext):
     await states.Menu.admin_edit.set()
 
 
-@dp.message_handler(state=states.Menu.admin_edit)
+@dp.message_handler(lambda c: is_admin(c.from_user.id), state=states.Menu.admin_edit)
 async def process_shortcode(message: Message, state: FSMContext):
     if message.text:
         text, markup = format_request(message.text)
@@ -41,7 +41,7 @@ async def process_shortcode(message: Message, state: FSMContext):
             await error.delete()
 
 
-@dp.callback_query_handler(Text(equals='admin_menu', ignore_case=True), state="*")
+@dp.callback_query_handler(lambda c: is_admin(c.from_user.id), Text(equals='admin_menu', ignore_case=True), state="*")
 async def admin_menu(query: CallbackQuery, state: FSMContext):
 
     async with state.proxy() as statedata:
@@ -52,7 +52,7 @@ async def admin_menu(query: CallbackQuery, state: FSMContext):
     await states.Menu.admin_menu.set()
 
 
-@dp.callback_query_handler(Text(equals='admin_stats', ignore_case=True), state=states.Menu.admin_menu)
+@dp.callback_query_handler(lambda c: is_admin(c.from_user.id), Text(equals='admin_stats', ignore_case=True), state=states.Menu.admin_menu)
 async def admin_stats(query: CallbackQuery, state: FSMContext):
     stats = get_stats()
     markup = InlineKeyboardMarkup()
