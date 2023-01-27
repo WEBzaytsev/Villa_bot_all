@@ -29,7 +29,26 @@ def parse_text_api(test_listing):
         listing_price = str(data['target']['listing_price']['amount']
                             ) if data['target']['listing_price']['currency'] == 'IDR' else 0
         listing_seller = data['target']['marketplace_listing_seller']['name']
-        listing_seller_id = data['target']['marketplace_listing_seller']['id']
+
+
+        seller_ids = [data['target']['marketplace_listing_seller'].get('id', 0), 
+                      data['target']['marketplace_listing_seller'].get('user_id', 0), 
+                      data['target']['story']['actors'].get('id', 0)]
+        filtered = []
+
+        for seller_id in seller_ids:
+            if seller_id.isdigit():
+                if seller_id != 0:
+                    filtered.append(seller_id)
+            else:
+                print(f'Non-digit ID found: {seller_id}')
+        filtered_set = set(filtered)
+        if filtered_set:
+            listing_seller_id = list(filtered_set)[0]
+        else:
+            # probably unreachable
+            listing_seller_id = 0
+        
 
         listing_desc = unicodedata.normalize(
             'NFKC', data['target']['redacted_description']['text'])
