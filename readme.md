@@ -3,7 +3,7 @@
 1) Clone everything from this repo.
 2) Edit `example.env` and save as `.env`.
 2) Execute `docker compose up -d` to build and run bots and parser.
-3) After everything is up - execute `docker exec -it villabot_all_renter_1 python3 fill_db.py` to fill a database. Change `villabot_all` part if cloned folder was renamed.
+3) After everything is up - execute `docker exec -it villabot_all-renter-1 python3 fill_db.py` to fill a database. Change `villabot_all` part if cloned folder was renamed.
 
 ## Running a existing bot
 There is already premade Compose files:
@@ -12,8 +12,8 @@ There is already premade Compose files:
 * Prod: uses @villa_rental_bot and @villa_tenant_bot
 
 Commands to run them:\
-Dev: `docker compose up -d --env-file dev.env -f docker-compose.dev.yml up`\
-Prod: `docker compose up -d --env-file prod.env -f docker-compose.prod.yml up`
+Dev: `docker compose --env-file dev.env -f docker-compose.dev.yml up -d`\
+Prod: `docker compose --env-file prod.env -f docker-compose.prod.yml up -d`
 
 ## .env details
 ### Telegram bots:
@@ -22,7 +22,7 @@ Prod: `docker compose up -d --env-file prod.env -f docker-compose.prod.yml up`
 ### Database:
 * `POSTGRES_DB` - PostgreSQL database name.
 * `POSTGRES_USER` - PostgreSQL username.
-* `POSTGRES_PASSWORD` -PostgreSQL password.
+* `POSTGRES_PASSWORD` - PostgreSQL password.
 * `DB_ADDRESS` - PostgreSQL address. By default - service name from docker compose (`db`).
 * `DB_PORT` - PostgreSQL port. By default - `5432`.
 ### Parser:
@@ -35,4 +35,4 @@ Prod: `docker compose up -d --env-file prod.env -f docker-compose.prod.yml up`
 * `MONGO_USERNAME` - MongoDB database username.
 * `MONGO_PASSWORD` - MongoDB database password.
 
-[^1]: Since Telegram doesn't allow uploading pictures without sending them somewhere - these channels being used for "uploading" purposes. 
+[^1]: Since Telegram doesn't allow uploading pictures without sending them somewhere - these channels being used for "uploading" purposes. Owner/tenant/renter bot should be added on these channels with `post_messages` right.
