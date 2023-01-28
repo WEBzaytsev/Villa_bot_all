@@ -14,19 +14,10 @@ hashids = Hashids("villabot_salt_k39p", 5,
 
 
 def start_user(tgid):
-    client = Client.get_or_none(Client.tgid == tgid)
-    if client:
-        if not client.name or not client.phone:
-            return True
-        return False
-    client = Client()
-    client.tgid = tgid
-    client.save()
+    client, created = Client.get_or_create(tgid = tgid)
+    return client, created
 
-    return True
-
-
-def change_pii(tgid, name, phone):
+def change_pii(tgid, name=None, phone=None):
     client = Client.get_or_none(Client.tgid == tgid)
     if client:
         if name:
