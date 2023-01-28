@@ -5,6 +5,8 @@ from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.mongo import MongoStorage
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 
+from middleware import UserCheckMiddleware
+
 REQUIRED_ENV = ['RENTEE_TOKEN', 'OWNER_TOKEN', 'MONGO_HOST',
                 'MONGO_PORT', 'MONGO_PASSWORD', 'MONGO_USERNAME']
 
@@ -27,4 +29,5 @@ storage = MongoStorage(host=MONGO_HOST,
                        password=MONGO_PASSWORD,)
 dp = Dispatcher(bot, storage=storage)
 dp.middleware.setup(LoggingMiddleware())
+dp.middleware.setup(UserCheckMiddleware())
 logging.basicConfig(level=logging.INFO)

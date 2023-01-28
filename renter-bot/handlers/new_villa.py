@@ -322,7 +322,7 @@ async def process_finish(query: CallbackQuery, state: FSMContext):
         for photo in statedata["media"]:
             set_apartment_media(apart, photo)
     await state.finish()
-    await cmd_start_alt(message=query.message, state=state)
+    await cmd_start_alt(message=query.from_user, state=state)
 
 
 @dp.message_handler(content_types='photo', state=states.NewVilla.media)

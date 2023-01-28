@@ -7,32 +7,26 @@ from aiogram.types import (KeyboardButton, Message, ReplyKeyboardMarkup,
 
 import keyboards
 import states
-from misc import dp
+from misc import dp, bot
 from orm_utils import change_pii, start_user, is_admin, is_admin_exists, switch_admin
 
 
-async def cmd_start_alt(message: types.Message, state: FSMContext):
+async def cmd_start_alt(from_user: types.User, state: FSMContext):
     current_state = await state.get_state()  # resets state
     if current_state is not None:
         await state.finish()
     markup = keyboards.main_menu()
-    if is_admin(message.from_user.id):
+    if is_admin(from_user.id):
         markup = keyboards.main_menu(admin=True)
-    return await message.answer("Welcome!", reply_markup=markup)
+    return await bot.send_message(from_user.id, "Welcome!", reply_markup=markup)
 
 
 @dp.message_handler(state='*', commands=['start'])
 @dp.message_handler(Text(equals='Main menu', ignore_case=True), state='*')
 async def cmd_start(message: types.Message, state: FSMContext):
-    new_user = start_user(message.from_user.id)
-
-    if new_user:
-        await message.answer(f"Hello, {message.from_user.first_name}! Please enter your name:", reply_markup=ReplyKeyboardRemove())
-        await states.NewUser.name.set()
-    else:
-        current_state = await state.get_state()  # resets state
-        if current_state is not None:
-            await state.finish()
+    current_state = await state.get_state()  # resets state
+    if current_state is not None:
+        await state.finish()
     markup = keyboards.main_menu()
     if is_admin(message.from_user.id):
         markup = keyboards.main_menu(admin=True)
@@ -51,6 +45,7 @@ async def cancel_handler(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(commands='state', state='*')
+@dp.message_handler(Text(equals='Cancel', ignore_case=True), state='*')
 async def cancel_handler(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
     await message.reply(f'{current_state}')
@@ -62,10 +57,10 @@ async def process_name(message: Message, state: FSMContext):
     markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)\
         .add(sharecontact)
 
-    await state.update_data(name=message.text)
+    change_pii(message.from_user.id, name = message.text)
     await states.NewUser.next()
 
-    await message.reply("☎️ Please provide your telephone number:", reply_markup=markup)
+    await message.reply("☎️ Please provide your telephone number in international format (e.g. +628...):", reply_markup=markup)
 
 
 @dp.message_handler(state=states.NewUser.phone, content_types=['contact'])
@@ -73,10 +68,8 @@ async def process_phone_contact(message: Message, state: FSMContext):
     phonenumber = message.contact.phone_number
 
     if message.contact.user_id == message.from_user.id:
-        await state.update_data(phone=phonenumber)
-        async with state.proxy() as data:
-            change_pii(int(message.from_user.id),
-                       data['name'], data['phone'])
+        change_pii(int(message.from_user.id),
+                       phone=phonenumber)
         await message.reply(
             "👍 Profile info saved.",
             reply_markup=ReplyKeyboardRemove())
@@ -102,9 +95,7 @@ async def process_phone(message: Message, state: FSMContext):
     phonenumber = phonenumbers.format_number(
         user_number, phonenumbers.PhoneNumberFormat.E164)
     await state.update_data(phone=phonenumber)
-    async with state.proxy() as data:
-        change_pii(int(message.from_user.id),
-                   data['name'], data['phone'])
+    change_pii(int(message.from_user.id), phone = phonenumber)
     await message.reply(
         "👍 Profile info saved.",
         reply_markup=ReplyKeyboardRemove())
@@ -129,7 +120,7 @@ async def grant_admin_rights(message: Message, state: FSMContext):
         await message.answer("No one has admin rights on the database. Enabling admin rights for your account...")
         if switch_admin(message.from_user.id):
             await message.answer("Done!")
-            await cmd_start_alt(message, state)
+            await cmd_start_alt(message.from_user, state)
         else:
             await message.answer("Something went wrong.")
 
